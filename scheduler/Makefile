@@ -9,7 +9,7 @@
 
 #---- global variables ----#
 WORK_PATH    := $(shell pwd)
-TOP_MODULE   := $(shell basename `pwd`)
+TOP_MODULE   := SKELETON
 LIB_PATH      = /home/ipel1/fchenaf/VerilogDesign/umc065_digital
 LIB 		  = /afs/umich.edu/class/eecs470/lib/verilog/lec25dscc25.v
 VLG_PATH      = $(WORK_PATH)/verilog
@@ -62,6 +62,11 @@ pre_sim: init
 	@cd $(PRE_SIM_PATH) &&\
 	$(VCS) tb_$(TOP_MODULE).sv &&\
 	./simv
+
+pre_sim_dve: init
+	@cd $(PRE_SIM_PATH) &&\
+	$(VCS) tb_$(TOP_MODULE).sv &&\
+	./simv -gui &
 
 #---- behavioral simulation after synthesis ----#
 syn_sim: init
