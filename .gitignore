@@ -1,5 +1,6 @@
 scheduler/post_sim/
 scheduler/pre_sim/
 scheduler/soc/
-scheduler/syn/
+scheduler/syn/*
 scheduler/syn_sim/
+!scheduler/syn/run_dc.tcl

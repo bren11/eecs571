@@ -137,7 +137,7 @@ always_comb begin
     end
 
     // Wakeup periodic tasks
-    for (int i = 0; i < `MAX_TASKS; ++i) begin
+    for (int unsigned i = 0; i < `MAX_TASKS; ++i) begin
         if (task_table[i].valid && task_table[i].task_type == PERIODIC && task_table[i].state == IDLE && task_table[i].next_wakeup <= current_time &&
              ~(current_criticality >= transition_nums[3] && task_table[i].criticality == LOW)) begin
             insert_valid = `TRUE;
@@ -178,7 +178,9 @@ always_comb begin
         ex_limit = task_table[running_task].ex_low;
     end else if (task_table[running_task].criticality == HIGH_HIGH_MODE) begin
         ex_limit = task_table[running_task].ex_high;
-    end 
+    end else begin
+        ex_limit = task_table[running_task].ex_low;
+    end
 
     // Handle removal of tasks from queue
     if (completion_valid || (running_valid && current_time >= task_table[running_task].absolute_deadline)) begin
