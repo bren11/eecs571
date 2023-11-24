@@ -1,3 +1,6 @@
 # ninja log v5
-4	340	7219978168761678	CMakeFiles/taskGen.dir/main_task_gen.cpp.obj	e62313072393552
-341	456	7219978169842945	taskGen.exe	5937e1b99523ab1a
+2	405	7224748902884326	CMakeFiles/simulator.dir/main.cpp.obj	996e28dda1afbf6
+4	583	7224316361080992	CMakeFiles/taskGen.dir/main_task_gen.cpp.obj	e1d8e71854fe740c
+584	725	7224316362481611	taskGen.exe	5937e1b99523ab1a
+4	286	7224748662768083	CMakeFiles/simulator.dir/Scheduler.cpp.obj	6834f1644346be82
+406	532	7224748904088161	simulator.exe	859d8a7119ff05f6

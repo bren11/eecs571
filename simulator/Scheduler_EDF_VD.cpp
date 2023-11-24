@@ -2,31 +2,22 @@
 
 using namespace std;
 
-Scheduler::Scheduler(const vector<Task> &tasksIn) {
-    tasks = tasksIn;
-}
+EDFVD::EDFVD(const vector<Task> &tasksIn) : EDF(tasksIn) {}
 
-int Scheduler::getContextSwitches() const {
-    return switches;
-}
-
-float Scheduler::getLowPFJ() const {
-    return (float)succeedLow / (float) (succeedLow + failedLow);
-}
-
-float Scheduler::getHighPFJ() const {
-    return (float)succeedHigh / (float) (succeedHigh + failedHigh);
-}
-
-EDF::EDF(const std::vector<Task> &tasksIn) : Scheduler(tasksIn) {}
-
-void EDF::schedule(int quantum, int maxTime) {
+void EDFVD::schedule(int quantum, int maxTime) {
     int runningId = -1;
 
     std::vector<TaskState> taskStates;
+    CritState mode = LowMode;
+
+    float uHigh = 0.0f;
+    float uHighLowMode = 0.0f;
+    float uLow = 0.0f;
 
     for (const Task& t : tasks) {
         taskStates.emplace_back(TaskState {Ready, 0, t.period, 0, 0});
+        uHigh += (float) t.highC / (float) t.period;
+        uLow += (float) t.lowC / (float) t.period;
     }
 
     switches = failedHigh = failedLow = succeedHigh = succeedLow = 0;
