@@ -20,6 +20,7 @@ public:
     virtual void schedule(int quantum, int maxTime) = 0;
     float getLowPFJ() const;
     float getHighPFJ() const;
+    float getIntPFJ() const;
     int getContextSwitches() const;
 
 protected:
@@ -27,6 +28,8 @@ protected:
     int succeedLow = 0;
     int failedHigh = 0;
     int succeedHigh = 0;
+    int failedInt = 0;
+    int succeedInt = 0;
     int switches = 0;
     std::vector<Task> tasks;
 };

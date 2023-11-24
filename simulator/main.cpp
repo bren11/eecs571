@@ -32,9 +32,9 @@ int main() {
 
             Task t;
 
-            int crit;
+            char crit;
             iss >> t.period >> crit >> t.lowC >> t.highC;
-            t.crit = crit == 0 ? Low : High;
+            t.crit = crit == 'L' ? Low : crit == 'H' ? High : Interrupt;
             while (!iss.eof()) {
                 int val;
                 iss >> val;
@@ -44,10 +44,10 @@ int main() {
         }
 
         Scheduler* sch = new EDF(tasks);
-        sch->schedule(50, clockPeriods);
-        cout << "Low PFJ: " << sch->getLowPFJ() << ",  High PFJ: " << sch->getHighPFJ() << ",  Switches: " << sch->getContextSwitches() << '\n';
+        sch->schedule(10000, clockPeriods);
+        cout << "Low PFJ: " << sch->getLowPFJ() << ",  High PFJ: " << sch->getHighPFJ() << ",  Int PFJ: " << sch->getIntPFJ() << ",  Switches: " << sch->getContextSwitches() << '\n';
         sch->schedule(1, clockPeriods);
-        cout << "Low PFJ: " << sch->getLowPFJ() << ",  High PFJ: " << sch->getHighPFJ() << ",  Switches: " << sch->getContextSwitches() << '\n';
+        cout << "Low PFJ: " << sch->getLowPFJ() << ",  High PFJ: " << sch->getHighPFJ() << ",  Int PFJ: " << sch->getIntPFJ() << ",  Switches: " << sch->getContextSwitches() << '\n';
     }
 
 
