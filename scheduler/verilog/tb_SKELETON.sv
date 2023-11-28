@@ -5,6 +5,7 @@ module tb_SKELETON;
 
     logic clk;
     logic rst;
+    logic en;
 
     TASK_TABLE_INPUT input_task;
     logic [`MAX_TASK_BITS-1:0] input_task_id;
@@ -25,7 +26,7 @@ module tb_SKELETON;
 
     logic cpu_interrupt;
 
-    SKELETON skl(.clk, .rst, .input_task, .wakeup_valid, .wakeup_id, .completion_valid,
+    SKELETON skl(.clk, .rst, .en, .input_task, .wakeup_valid, .wakeup_id, .completion_valid,
     .completion_succesful, .transition_nums, .running_task, .next_task, .running_valid, .next_valid, .cpu_interrupt);
 
     always begin
@@ -36,6 +37,7 @@ module tb_SKELETON;
     initial begin
         rst = 1;
         clk = 0;
+        en = 1;
 
         input_task = 0;
         wakeup_valid = 0;
@@ -57,8 +59,13 @@ module tb_SKELETON;
         @(negedge clk);
         input_task.valid = 1;
         input_task.period = 20;
-        input_task.deadline = 15;
         input_task.ex_low = 5;
+        @(negedge clk);
+        input_task.period = 40;
+        input_task.virtual_deadline = 30;
+        input_task.criticality = HIGH_CRIT;
+        input_task.ex_low = 5;
+        input_task.ex_high = 10;
         @(negedge clk);
         input_task.valid = 0;
         for (int i = 0; i < 100; i++) begin
