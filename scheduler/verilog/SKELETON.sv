@@ -1,27 +1,30 @@
 //Verilog HDL for "DIGITAL", "SKELETON", "functional"
-`define MAX_TASKS 32
+`define MAX_TASKS 8
 `define MAX_TASK_BITS $clog2(`MAX_TASKS)
 
 `define NUM_INTERRUPTS 8
 `define NUM_INTERRUPT_BITS $clog2(`MAX_TASKS)
 
-`define TIME_BITS 32
+`define TIME_BITS 8
 
 `define FALSE  1'h0
 `define TRUE  1'h1
 
-typedef enum logic [1:0] {
-	PERIODIC = 2'h0,
-	SPORADIC  = 2'h1,
-    INTERRUPT = 2'h2
+typedef enum logic {
+	PERIODIC = 1'h0,
+	SPORADIC  = 1'h1
 } TASK_TYPE;
 
 typedef enum logic [1:0] {
 	LOW = 2'h0,
 	HIGH_HIGH_MODE = 2'h1,
-    HIGH_LOW_MODE = 2'h2,
-    INTERRUPT_CRITICALITY = 2'h3
+    HIGH_LOW_MODE = 2'h2
 } TASK_CRITICALITY;
+
+typedef enum logic {
+	LOW_CRIT = 1'h0,
+    HIGH_CRIT = 1'h1
+} TASK_CRIT_IN;
 
 typedef enum logic [1:0] {
 	IDLE = 2'h0,
@@ -35,12 +38,13 @@ typedef struct packed {
     TASK_CRITICALITY criticality;
     TASK_STATE state;
     logic [`TIME_BITS-1:0] period;
-    logic [`TIME_BITS-1:0] deadline;
+    logic [`TIME_BITS-1:0] virtual_deadline;
     logic [`TIME_BITS-1:0] ex_high;
     logic [`TIME_BITS-1:0] ex_low;
 
-    logic [`TIME_BITS-1:0] next_wakeup;
+    logic [`TIME_BITS-1:0] wakeup;
     logic [`TIME_BITS-1:0] absolute_deadline;
+    logic [`TIME_BITS-1:0] scheduling_deadline;
     logic [`TIME_BITS-1:0] ex_time;
 } TASK_TABLE_ENTRY;
 
@@ -48,10 +52,10 @@ typedef struct packed {
     logic valid;
     logic [`MAX_TASK_BITS-1:0] id;
     TASK_TYPE task_type;
-    TASK_CRITICALITY criticality;
+    TASK_CRIT_IN criticality;
     //logic [`NUM_INTERRUPT_BITS-1:0] interrupt_id;
     logic [`TIME_BITS-1:0] period;
-    logic [`TIME_BITS-1:0] deadline;
+    logic [`TIME_BITS-1:0] virtual_deadline;
     logic [`TIME_BITS-1:0] ex_high;
     logic [`TIME_BITS-1:0] ex_low;
 } TASK_TABLE_INPUT;
@@ -59,12 +63,12 @@ typedef struct packed {
 module SKELETON (
     input clk,
     input rst,
+    input en,
 
     input TASK_TABLE_INPUT input_task,
 
     input wakeup_valid,
     input [`MAX_TASK_BITS-1:0] wakeup_id,
-    //input [`NUM_INTERRUPTS-1:0] hardware_interrupts
 
     input completion_valid,
     input completion_succesful,
@@ -125,24 +129,28 @@ always_comb begin
     if (input_task.valid) begin 
         n_task_table[input_task.id].valid = `TRUE;
         n_task_table[input_task.id].task_type = input_task.task_type;
-        n_task_table[input_task.id].criticality = input_task.criticality;
+        n_task_table[input_task.id].criticality = input_task.criticality == LOW_CRIT ? LOW : HIGH_LOW_MODE;
         n_task_table[input_task.id].state = IDLE;
         n_task_table[input_task.id].period = input_task.period;
-        n_task_table[input_task.id].deadline = input_task.deadline;
+        n_task_table[input_task.id].virtual_deadline = input_task.virtual_deadline;
         n_task_table[input_task.id].ex_high = input_task.ex_high;
         n_task_table[input_task.id].ex_low = input_task.ex_low;
-        n_task_table[input_task.id].next_wakeup = 0;
+        n_task_table[input_task.id].wakeup = 0;
         n_task_table[input_task.id].absolute_deadline = 0;
+        n_task_table[input_task.id].scheduling_deadline = 0;
         n_task_table[input_task.id].ex_time = 0;
     end
 
     // Wakeup periodic tasks
     for (int unsigned i = 0; i < `MAX_TASKS; ++i) begin
-        if (task_table[i].valid && task_table[i].task_type == PERIODIC && task_table[i].state == IDLE && task_table[i].next_wakeup <= current_time &&
-             ~(current_criticality >= transition_nums[3] && task_table[i].criticality == LOW)) begin
-            insert_valid = `TRUE;
-            insert_id = i;
-            break;
+        if (task_table[i].valid && task_table[i].task_type == PERIODIC && task_table[i].state == IDLE && task_table[i].wakeup <= current_time) begin
+            if (current_criticality >= transition_nums[3] && task_table[i].criticality == LOW) begin
+                n_task_table[i].wakeup = n_task_table[i].wakeup + task_table[i].period;
+            end else begin
+                insert_valid = `TRUE;
+                insert_id = i;
+                break;
+            end
         end
     end
     
@@ -152,12 +160,12 @@ always_comb begin
             n_task_table[wakeup_id].state = IDLE;
             n_task_table[wakeup_id].ex_time = 0;
             if (task_table[wakeup_id].task_type == PERIODIC) begin
-                n_task_table[wakeup_id].next_wakeup = current_time + task_table[wakeup_id].period;
+                n_task_table[wakeup_id].wakeup = n_task_table[wakeup_id].wakeup + task_table[wakeup_id].period;
             end
         end else if (task_table[wakeup_id].state == BLOCKED) begin
             insert_valid = `TRUE;
             insert_id = wakeup_id;
-        end else if (task_table[wakeup_id].state == IDLE && (task_table[wakeup_id].task_type == SPORADIC || task_table[wakeup_id].task_type == INTERRUPT)) begin
+        end else if (task_table[wakeup_id].state == IDLE && task_table[wakeup_id].task_type == SPORADIC) begin
             insert_valid = `TRUE;
             insert_id = wakeup_id;
         end
@@ -188,7 +196,7 @@ always_comb begin
             n_task_table[running_task].state = IDLE;
             n_task_table[running_task].ex_time = 0;
             if (task_table[running_task].task_type == PERIODIC) begin
-                n_task_table[running_task].next_wakeup = current_time + task_table[running_task].period;
+                n_task_table[running_task].wakeup = task_table[running_task].wakeup + task_table[running_task].period;
             end
         end else begin
             n_task_table[running_task].state = BLOCKED;
@@ -196,13 +204,14 @@ always_comb begin
     end else if (running_valid && task_table[running_task].ex_time >= ex_limit) begin
         if (task_table[running_task].criticality == HIGH_LOW_MODE) begin
             n_task_table[running_task].criticality = HIGH_HIGH_MODE;
+            n_task_table[running_task].scheduling_deadline = task_table[running_task].absolute_deadline;
             criticality_transition = `TRUE;
         end else begin
             pop_valid = `TRUE;
             n_task_table[running_task].state = IDLE;
             n_task_table[running_task].ex_time = 0;
             if (task_table[running_task].task_type == PERIODIC) begin
-                n_task_table[running_task].next_wakeup = current_time + task_table[running_task].period;
+                n_task_table[running_task].wakeup = task_table[running_task].wakeup + task_table[running_task].period;
             end
         end
     end else if (running_valid) begin 
@@ -212,9 +221,19 @@ always_comb begin
     // Handle insertion of tasks to queue
     if (insert_valid) begin
         if (task_table[insert_id].task_type == PERIODIC) begin
-            n_task_table[insert_id].absolute_deadline = task_table[insert_id].next_wakeup + task_table[insert_id].deadline;
+            n_task_table[insert_id].absolute_deadline = task_table[insert_id].wakeup + task_table[insert_id].period;
+            if (task_table[insert_id].criticality == HIGH_LOW_MODE) begin
+                n_task_table[insert_id].scheduling_deadline = task_table[insert_id].wakeup + task_table[insert_id].virtual_deadline;
+            end else begin
+                n_task_table[insert_id].scheduling_deadline = task_table[insert_id].wakeup + task_table[insert_id].period;
+            end
         end else begin
-            n_task_table[insert_id].absolute_deadline = current_time + task_table[insert_id].deadline;
+            n_task_table[insert_id].absolute_deadline = current_time + task_table[insert_id].period;
+            if (task_table[insert_id].criticality == HIGH_LOW_MODE) begin
+                n_task_table[insert_id].scheduling_deadline = current_time + task_table[insert_id].virtual_deadline;
+            end else begin
+                n_task_table[insert_id].scheduling_deadline = current_time + task_table[insert_id].period;
+            end
         end
         n_task_table[insert_id].state = READY;
         n_task_table[insert_id].ex_time = task_table[insert_id].ex_time + 1;
@@ -223,7 +242,7 @@ always_comb begin
     // Actually add or remove from queue
     if (insert_valid && pop_valid) begin
         for (int i = 1; i < `MAX_TASKS; ++i) begin
-            if (~task_table[ready_queue[i]].valid || task_table[ready_queue[i]].state != READY || task_table[ready_queue[i]].absolute_deadline > n_task_table[insert_id].absolute_deadline) begin
+            if (~task_table[ready_queue[i]].valid || task_table[ready_queue[i]].state != READY || task_table[ready_queue[i]].scheduling_deadline > n_task_table[insert_id].scheduling_deadline) begin
                 n_ready_queue[i - 1] = insert_id;
                 break;
             end
@@ -235,7 +254,7 @@ always_comb begin
                 n_ready_queue[i] = insert_id;
                 break;
             end
-            if (task_table[ready_queue[i - 1]].valid && task_table[ready_queue[i - 1]].state == READY && task_table[ready_queue[i - 1]].absolute_deadline <= n_task_table[insert_id].absolute_deadline) begin
+            if (task_table[ready_queue[i - 1]].valid && task_table[ready_queue[i - 1]].state == READY && task_table[ready_queue[i - 1]].scheduling_deadline <= n_task_table[insert_id].scheduling_deadline) begin
                 n_ready_queue[i] = insert_id;
                 break;
             end
@@ -246,6 +265,14 @@ always_comb begin
             n_ready_queue[i - 1] = ready_queue[i];
         end
     end
+
+    if (current_time[`TIME_BITS-1]) begin
+        for (int i = 0; i < `MAX_TASKS - 1; ++i) begin
+            n_task_table[i].wakeup = n_task_table[i].wakeup & ~(1 << (`TIME_BITS - 1));
+            n_task_table[i].absolute_deadline = n_task_table[i].absolute_deadline & ~(1 << (`TIME_BITS - 1));
+            n_task_table[i].scheduling_deadline = n_task_table[i].absolute_deadline & ~(1 << (`TIME_BITS - 1));
+        end
+    end
 end
 
 always_ff @(posedge clk) begin
@@ -253,14 +280,9 @@ always_ff @(posedge clk) begin
         task_table <= 0;
         ready_queue <= 0;
         current_criticality <= 0;
-    end else begin 
+    end else if (en) begin 
         task_table <= n_task_table;
         ready_queue <= n_ready_queue;
-        /*if (insert_valid & ~completion_valid) begin
-            queue_size <= queue_size + 1;
-        end else if (~insert_valid & completion_valid) begin
-            queue_size <= queue_size - 1;
-        end*/
         if (criticality_transition) begin
             current_criticality <= current_criticality + 1;
         end else if (~running_valid) begin 
