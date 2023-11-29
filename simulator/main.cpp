@@ -16,9 +16,11 @@ int main() {
 
     for (int fileNum = 0; fileNum < taskSetNum; fileNum++) {
 
+
         ifstream file;
         file.open("tasks/task_set_" + to_string(fileNum) + ".txt");
         file >> bound >> overrunP >> slackRatio >> clockPeriods >> taskSetNum >> numTasks;
+        //if (fileNum == 0) continue;
 
         vector<Task> tasks;
 
@@ -43,7 +45,7 @@ int main() {
             tasks.push_back(t);
         }
 
-        Scheduler* sch = new EDF(tasks);
+        Scheduler* sch = new FMC(tasks);
         sch->schedule(10000, clockPeriods);
         cout << "Low PFJ: " << sch->getLowPFJ() << ",  High PFJ: " << sch->getHighPFJ() << ",  Int PFJ: " << sch->getIntPFJ() << ",  Switches: " << sch->getContextSwitches() << '\n';
         sch->schedule(1, clockPeriods);

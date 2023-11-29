@@ -11,15 +11,24 @@ int Scheduler::getContextSwitches() const {
 }
 
 float Scheduler::getLowPFJ() const {
-    return (float)succeedLow / (float) (succeedLow + failedLow);
+    if (succeedLow + failedLow == 0) {
+        return 1;
+    }
+    return (float) succeedLow / (float) (succeedLow + failedLow);
 }
 
 float Scheduler::getHighPFJ() const {
-    return (float)succeedHigh / (float) (succeedHigh + failedHigh);
+    if (succeedHigh + failedHigh == 0) {
+        return 1;
+    }
+    return (float) succeedHigh / (float) (succeedHigh + failedHigh);
 }
 
 float Scheduler::getIntPFJ() const {
-    return (float)succeedInt / (float) (succeedInt + failedInt);
+    if (succeedInt + failedInt == 0) {
+        return 1;
+    }
+    return (float) succeedInt / (float) (succeedInt + failedInt);
 }
 
 EDF::EDF(const std::vector<Task> &tasksIn) : Scheduler(tasksIn) {}
@@ -29,8 +38,8 @@ void EDF::schedule(int quantum, int maxTime) {
 
     std::vector<TaskState> taskStates;
 
-    for (const Task& t : tasks) {
-        taskStates.emplace_back(TaskState {Ready, 0, t.period, 0, 0});
+    for (const Task &t: tasks) {
+        taskStates.emplace_back(TaskState{Ready, 0, t.period, 0, 0});
     }
 
     switches = failedHigh = failedLow = succeedHigh = succeedLow = succeedInt = failedInt = 0;
@@ -48,12 +57,14 @@ void EDF::schedule(int quantum, int maxTime) {
         }
 
         if (time % quantum == 0 || interrupt ||
-            runningId >= 0 && (taskStates[runningId].exeTime >= tasks[runningId].exeTimes[taskStates[runningId].exeNum] ||
-            time >= taskStates[runningId].absoluteDeadline)) {
+            runningId >= 0 &&
+            (taskStates[runningId].exeTime >= tasks[runningId].exeTimes[taskStates[runningId].exeNum] ||
+             time >= taskStates[runningId].absoluteDeadline)) {
 
             switches++;
 
-            if (runningId >= 0 && taskStates[runningId].exeTime >= tasks[runningId].exeTimes[taskStates[runningId].exeNum]) {
+            if (runningId >= 0 &&
+                taskStates[runningId].exeTime >= tasks[runningId].exeTimes[taskStates[runningId].exeNum]) {
                 if (tasks[runningId].crit == Low) {
                     succeedLow++;
                 } else if (tasks[runningId].crit == High) {
@@ -69,7 +80,8 @@ void EDF::schedule(int quantum, int maxTime) {
             }
 
             for (int i = 0; i < tasks.size(); i++) {
-                if ((taskStates[i].state == Ready || taskStates[i].state == Running) && time >= taskStates[i].absoluteDeadline) {
+                if ((taskStates[i].state == Ready || taskStates[i].state == Running) &&
+                    time >= taskStates[i].absoluteDeadline) {
                     taskStates[i].exeNum++;
                     taskStates[i].state = Idle;
                     taskStates[i].wakeupTime += tasks[i].period;

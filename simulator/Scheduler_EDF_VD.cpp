@@ -2,7 +2,7 @@
 
 using namespace std;
 
-EDFVD::EDFVD(const vector<Task> &tasksIn) : EDF(tasksIn) {}
+EDFVD::EDFVD(const vector<Task> &tasksIn) : Scheduler(tasksIn) {}
 
 void EDFVD::schedule(int quantum, int maxTime) {
     int runningId = -1;
@@ -16,75 +16,140 @@ void EDFVD::schedule(int quantum, int maxTime) {
 
     for (const Task& t : tasks) {
         taskStates.emplace_back(TaskState {Ready, 0, t.period, 0, 0});
-        uHigh += (float) t.highC / (float) t.period;
-        uLow += (float) t.lowC / (float) t.period;
+        if (t.crit == Low || t.crit == Interrupt) {
+            uLow += (float) t.lowC / (float) t.period;
+        }
+        if (t.crit == High || t.crit == Interrupt){
+            uHighLowMode += (float) t.lowC / (float) t.period;
+            uHigh += (float) t.highC / (float) t.period;
+        }
+    }
+
+    float lamda = uHighLowMode / (1 - uLow);
+
+    for (int i = 0; i < tasks.size(); i++) {
+        if (tasks[i].crit == High) {
+            taskStates[i].schedulingDeadline = tasks[i].period * lamda;
+        } else {
+            taskStates[i].schedulingDeadline = tasks[i].period;
+        }
     }
 
     switches = failedHigh = failedLow = succeedHigh = succeedLow = 0;
 
-    int lastTime = 0;
-    for (int time = 0; time <= maxTime; time = (time / quantum + 1) * quantum) {
-        switches += 2;
-        if (runningId >= 0) {
-            taskStates[runningId].exeTime += time - lastTime;
-        }
-        if (runningId >= 0 && taskStates[runningId].exeTime >= tasks[runningId].exeTimes[taskStates[runningId].exeNum]) {
-            time -= taskStates[runningId].exeTime - tasks[runningId].exeTimes[taskStates[runningId].exeNum];
-            if (time >= taskStates[runningId].absoluteDeadline) {
-                time = taskStates[runningId].absoluteDeadline;
-                if (tasks[runningId].crit == Low) {
-                    failedLow++;
-                } else {
-                    failedHigh++;
+    for (int time = 0; time <= maxTime; time++) {
+
+        bool interrupt = false;
+        if (runningId < 0 || tasks[runningId].crit != Interrupt) {
+            for (int i = 0; i < tasks.size(); i++) {
+                if (tasks[i].crit == Interrupt && taskStates[i].state == Idle && time >= taskStates[i].wakeupTime) {
+                    interrupt = true;
+                    break;
                 }
-            } else {
+            }
+        }
+
+        if (time % quantum == 0 || interrupt ||
+            runningId >= 0 && (taskStates[runningId].exeTime >= tasks[runningId].exeTimes[taskStates[runningId].exeNum] ||
+                    (taskStates[runningId].exeTime > tasks[runningId].lowC && mode == LowMode) ||
+                    time >= taskStates[runningId].absoluteDeadline)) {
+
+            switches++;
+
+            if (runningId >= 0 && taskStates[runningId].exeTime >= tasks[runningId].exeTimes[taskStates[runningId].exeNum]) {
                 if (tasks[runningId].crit == Low) {
                     succeedLow++;
-                } else {
+                } else if (tasks[runningId].crit == High) {
                     succeedHigh++;
-                }
-            }
-            taskStates[runningId].exeNum++;
-            taskStates[runningId].state = Idle;
-            taskStates[runningId].wakeupTime += tasks[runningId].period;
-            taskStates[runningId].exeTime = 0;
-            runningId = -1;
-        }
-        lastTime = time;
-        for (int i = 0; i < tasks.size(); i++) {
-            if ((taskStates[i].state == Ready || taskStates[i].state == Running) && time >= taskStates[i].absoluteDeadline) {
-                taskStates[i].exeNum++;
-                taskStates[i].state = Idle;
-                taskStates[i].wakeupTime += tasks[i].period;
-                taskStates[i].exeTime = 0;
-                if (tasks[i].crit == Low) {
-                    failedLow++;
                 } else {
-                    failedHigh++;
+                    succeedInt++;
                 }
-                if (i == runningId) {
-                    runningId = -1;
+                taskStates[runningId].exeNum++;
+                taskStates[runningId].state = Idle;
+                taskStates[runningId].wakeupTime += tasks[runningId].period;
+                taskStates[runningId].exeTime = 0;
+                runningId = -1;
+            }
+
+            if (runningId >= 0 && taskStates[runningId].exeTime > tasks[runningId].lowC && mode == LowMode) {
+                mode = HighMode;
+                for (int i = 0; i < tasks.size(); i++) {
+                    if (tasks[i].crit == High && taskStates[i].state != Idle) {
+                        taskStates[i].schedulingDeadline = taskStates[i].wakeupTime + tasks[i].period;
+                    }
                 }
             }
-        }
-        for (int i = 0; i < tasks.size(); i++) {
-            if (taskStates[i].state == Idle && time >= taskStates[i].wakeupTime) {
-                taskStates[i].state = Ready;
-                taskStates[i].absoluteDeadline = taskStates[i].wakeupTime + tasks[i].period;
+
+            for (int i = 0; i < tasks.size(); i++) {
+                if ((taskStates[i].state == Ready || taskStates[i].state == Running) && time >= taskStates[i].absoluteDeadline) {
+                    taskStates[i].exeNum++;
+                    taskStates[i].state = Idle;
+                    taskStates[i].wakeupTime += tasks[i].period;
+                    taskStates[i].exeTime = 0;
+                    if (tasks[i].crit == Low) {
+                        failedLow++;
+                    } else if (tasks[i].crit == High) {
+                        failedHigh++;
+                    } else {
+                        failedInt++;
+                    }
+                    if (i == runningId) {
+                        runningId = -1;
+                    }
+                }
             }
-        }
-        int minId = runningId;
-        for (int i = 0; i < tasks.size(); i++) {
-            if (taskStates[i].state == Ready && (minId < 0 || taskStates[i].absoluteDeadline < taskStates[minId].absoluteDeadline)) {
-                minId = i;
+
+            for (int i = 0; i < tasks.size(); i++) {
+                if (taskStates[i].state == Idle && time >= taskStates[i].wakeupTime) {
+                    taskStates[i].state = Ready;
+                    if (mode == LowMode && tasks[i].crit == High) {
+                        taskStates[i].schedulingDeadline = taskStates[i].wakeupTime + (int)(tasks[i].period * lamda);
+                    } else {
+                        taskStates[i].schedulingDeadline = taskStates[i].wakeupTime + tasks[i].period;
+                    }
+                    taskStates[i].absoluteDeadline = taskStates[i].wakeupTime + tasks[i].period;
+                }
             }
-        }
-        if (minId != runningId) {
-            if (runningId >= 0) {
+
+            if (mode == HighMode && runningId >= 0 && tasks[runningId].crit == Low) {
                 taskStates[runningId].state = Ready;
+                runningId = -1;
             }
-            taskStates[minId].state = Running;
-            runningId = minId;
+
+            int minId = runningId;
+            if (runningId < 0 || tasks[runningId].crit != Interrupt) {
+                for (int i = 0; i < tasks.size(); i++) {
+                    if (taskStates[i].state == Ready && (mode == LowMode || tasks[i].crit != Low) &&
+                        (minId < 0 || taskStates[i].schedulingDeadline < taskStates[minId].schedulingDeadline)) {
+                        minId = i;
+                    }
+                    if (taskStates[i].state == Ready && tasks[i].crit == Interrupt) {
+                        minId = i;
+                        break;
+                    }
+                }
+                if (minId != runningId) {
+                    if (runningId >= 0) {
+                        taskStates[runningId].state = Ready;
+                    }
+                    taskStates[minId].state = Running;
+                    runningId = minId;
+                }
+            }
+            if (runningId == -1 && mode == HighMode) {
+                mode = LowMode;
+                for (int i = 0; i < tasks.size(); i++) {
+                    if (taskStates[i].state == Ready && (runningId < 0 || taskStates[i].absoluteDeadline < taskStates[runningId].absoluteDeadline)) {
+                        runningId = i;
+                    }
+                }
+                if (runningId >= 0) {
+                    taskStates[runningId].state = Running;
+                }
+            }
+        }
+        if (runningId >= 0) {
+            taskStates[runningId].exeTime++;
         }
     }
 }

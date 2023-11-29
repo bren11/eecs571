@@ -41,7 +41,7 @@ int main() {
     float highP = .4;
 
     int clockPeriods = 1000000;
-    int taskSetNum = 5;
+    int taskSetNum = 10;
 
     for (int i = 0; i < taskSetNum; i++) {
 
@@ -55,21 +55,21 @@ int main() {
             float type = randomFloat(0, 1);
             t.crit = type < interruptP ? Interrupt : type < interruptP + highP ? High : Low;
 
-            /*type = randomFloat(0, 1);
+            type = randomFloat(0, 1);
             float uLow;
             if (type <= .5f) {
                 t.period = randomInt(200, 1000);
-                uLow = randomFloat(0.1f, .2f);
+                uLow = randomFloat(0.05f, .15f);
             } else if (type <= 1) {
                 t.period = randomInt(1000, 100000);
-                uLow = randomFloat(0.05f, .1f);
+                uLow = randomFloat(0.01f, .05f);
             } else {
                 t.period = randomInt(100000, 10000000);
-                uLow = randomFloat(0.01f, .01f);
-            }*/
+                uLow = randomFloat(0.005f, .01f);
+            }
 
-            t.period = randomInt(200, 1000);
-            float uLow = randomFloat(0.05f, .15f);
+            //t.period = randomInt(200, 1000);
+            //float uLow = randomFloat(0.05f, .15f);
 
             t.lowC = (int) roundf(uLow * (float) t.period);
 

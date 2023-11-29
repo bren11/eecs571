@@ -16,7 +16,7 @@ struct Task {
 
 class Scheduler {
 public:
-    Scheduler(const std::vector<Task>& tasksIn);
+    explicit Scheduler(const std::vector<Task>& tasksIn);
     virtual void schedule(int quantum, int maxTime) = 0;
     float getLowPFJ() const;
     float getHighPFJ() const;
@@ -36,7 +36,7 @@ protected:
 
 class EDF : public Scheduler {
 public:
-    EDF(const std::vector<Task>& tasksIn);
+    explicit EDF(const std::vector<Task>& tasksIn);
     void schedule(int quantum, int maxTime) override;
 
 private:
@@ -51,9 +51,9 @@ private:
     };
 };
 
-class EDFVD : public EDF {
+class EDFVD : public Scheduler {
 public:
-    EDFVD(const std::vector<Task>& tasksIn);
+    explicit EDFVD(const std::vector<Task>& tasksIn);
     void schedule(int quantum, int maxTime) override;
 
 private:
@@ -64,6 +64,26 @@ private:
         State state;
         int wakeupTime;
         int absoluteDeadline;
+        int schedulingDeadline;
+        int exeTime;
+        int exeNum;
+    };
+};
+
+class FMC : public Scheduler {
+public:
+    explicit FMC(const std::vector<Task>& tasksIn);
+    void schedule(int quantum, int maxTime) override;
+
+private:
+    enum State { Idle, Ready, Running};
+    enum CritState { HighMode, LowMode};
+
+    struct TaskState {
+        State state;
+        int wakeupTime;
+        int absoluteDeadline;
+        int schedulingDeadline;
         int exeTime;
         int exeNum;
     };
