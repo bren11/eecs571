@@ -2,9 +2,6 @@
 `define MAX_TASKS 8
 `define MAX_TASK_BITS $clog2(`MAX_TASKS)
 
-`define NUM_INTERRUPTS 8
-`define NUM_INTERRUPT_BITS $clog2(`MAX_TASKS)
-
 `define TIME_BITS 8
 
 `define FALSE  1'h0
@@ -53,7 +50,6 @@ typedef struct packed {
     logic [`MAX_TASK_BITS-1:0] id;
     TASK_TYPE task_type;
     TASK_CRIT_IN criticality;
-    //logic [`NUM_INTERRUPT_BITS-1:0] interrupt_id;
     logic [`TIME_BITS-1:0] period;
     logic [`TIME_BITS-1:0] virtual_deadline;
     logic [`TIME_BITS-1:0] ex_high;
@@ -277,9 +273,9 @@ always_comb begin
 
     if (current_time[`TIME_BITS-1]) begin
         for (int i = 0; i < `MAX_TASKS - 1; ++i) begin
-            n_task_table[i].wakeup = n_task_table[i].wakeup & ~(1 << (`TIME_BITS - 1));
-            n_task_table[i].absolute_deadline = n_task_table[i].absolute_deadline & ~(1 << (`TIME_BITS - 1));
-            n_task_table[i].scheduling_deadline = n_task_table[i].absolute_deadline & ~(1 << (`TIME_BITS - 1));
+            n_task_table[i].wakeup[`TIME_BITS - 1] = 0;
+            n_task_table[i].absolute_deadline[`TIME_BITS - 1] = 0;
+            n_task_table[i].scheduling_deadline[`TIME_BITS - 1] = 0;
         end
     end
 end
