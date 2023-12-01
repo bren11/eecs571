@@ -99,7 +99,7 @@ TASK_TABLE_ENTRY [`MAX_TASKS-1:0] n_task_table;
 
 logic [`MAX_TASKS-1:0][`MAX_TASK_BITS-1:0] ready_queue;
 logic [`MAX_TASKS-1:0][`MAX_TASK_BITS-1:0] n_ready_queue;
-//logic [`MAX_TASK_BITS-1:0] queue_size;
+logic [`MAX_TASK_BITS-1:0] queue_size;
 
 logic insert_valid;
 logic pop_valid;
@@ -113,7 +113,7 @@ logic criticality_transition;
 assign running_task = ready_queue[0];
 assign next_task = ready_queue[1];
 assign running_valid = task_table[running_task].state == READY;
-assign next_valid = task_table[running_task].state == READY && running_task != next_task;
+assign next_valid = task_table[next_task].state == READY && running_task != next_task;
 assign cpu_interrupt = ready_queue[0] != n_ready_queue[0];
 
 always_comb begin
@@ -205,6 +205,7 @@ always_comb begin
         if (task_table[running_task].criticality == HIGH_LOW_MODE) begin
             n_task_table[running_task].criticality = HIGH_HIGH_MODE;
             n_task_table[running_task].scheduling_deadline = task_table[running_task].absolute_deadline;
+            n_task_table[running_task].ex_time = task_table[running_task].ex_time + 1;
             criticality_transition = `TRUE;
         end else begin
             pop_valid = `TRUE;
@@ -242,7 +243,7 @@ always_comb begin
     // Actually add or remove from queue
     if (insert_valid && pop_valid) begin
         for (int i = 1; i < `MAX_TASKS; ++i) begin
-            if (~task_table[ready_queue[i]].valid || task_table[ready_queue[i]].state != READY || task_table[ready_queue[i]].scheduling_deadline > n_task_table[insert_id].scheduling_deadline) begin
+            if (i >= queue_size || task_table[ready_queue[i]].scheduling_deadline > n_task_table[insert_id].scheduling_deadline) begin
                 n_ready_queue[i - 1] = insert_id;
                 break;
             end
@@ -254,7 +255,7 @@ always_comb begin
                 n_ready_queue[i] = insert_id;
                 break;
             end
-            if (task_table[ready_queue[i - 1]].valid && task_table[ready_queue[i - 1]].state == READY && task_table[ready_queue[i - 1]].scheduling_deadline <= n_task_table[insert_id].scheduling_deadline) begin
+            if (i <= queue_size && task_table[ready_queue[i - 1]].scheduling_deadline <= n_task_table[insert_id].scheduling_deadline) begin
                 n_ready_queue[i] = insert_id;
                 break;
             end
@@ -263,6 +264,14 @@ always_comb begin
     end else if (pop_valid) begin
         for (int i = 1; i < `MAX_TASKS; ++i) begin
             n_ready_queue[i - 1] = ready_queue[i];
+        end
+    end
+    
+    if (~running_valid && current_criticality > 0) begin
+        for (int i = 0; i < `MAX_TASKS - 1; ++i) begin
+            if (task_table[i].valid && task_table[i].criticality == HIGH_HIGH_MODE) begin
+                n_task_table[i].criticality = HIGH_LOW_MODE;
+            end
         end
     end
 
@@ -280,9 +289,15 @@ always_ff @(posedge clk) begin
         task_table <= 0;
         ready_queue <= 0;
         current_criticality <= 0;
+        queue_size <= 0;
     end else if (en) begin 
         task_table <= n_task_table;
         ready_queue <= n_ready_queue;
+        if (insert_valid & ~pop_valid) begin
+            queue_size <= queue_size + 1;
+        end else if (~insert_valid & pop_valid) begin
+            queue_size <= queue_size - 1;
+        end
         if (criticality_transition) begin
             current_criticality <= current_criticality + 1;
         end else if (~running_valid) begin 

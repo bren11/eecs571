@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="tb_SKELETON_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="\$unit_SKELETON_sv_993608946 " />
+            <top_module name="glbl" />
+            <top_module name="tb_SKELETON" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="0.000 ns"></ZoomStartTime>
+      <ZoomEndTime time="218.001 ns"></ZoomEndTime>
+      <Cursor1Time time="218.000 ns"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="276"></NameColumnWidth>
+      <ValueColumnWidth column_width="120"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="27" />
+   <wvobject fp_name="/tb_SKELETON/skl/wakeup_valid" type="logic">
+      <obj_property name="ElementShortName">wakeup_valid</obj_property>
+      <obj_property name="ObjectShortName">wakeup_valid</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_SKELETON/skl/wakeup_id" type="array">
+      <obj_property name="ElementShortName">wakeup_id[2:0]</obj_property>
+      <obj_property name="ObjectShortName">wakeup_id[2:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_SKELETON/skl/transition_nums" type="array">
+      <obj_property name="ElementShortName">transition_nums[3:0][2:0]</obj_property>
+      <obj_property name="ObjectShortName">transition_nums[3:0][2:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_SKELETON/skl/task_table" type="array">
+      <obj_property name="ElementShortName">task_table[7:0]</obj_property>
+      <obj_property name="ObjectShortName">task_table[7:0]</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject fp_name="/tb_SKELETON/skl/task_table[7]" type="array">
+         <obj_property name="ElementShortName">[7]</obj_property>
+         <obj_property name="ObjectShortName">[7]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/tb_SKELETON/skl/task_table[6]" type="array">
+         <obj_property name="ElementShortName">[6]</obj_property>
+         <obj_property name="ObjectShortName">[6]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/tb_SKELETON/skl/task_table[5]" type="array">
+         <obj_property name="ElementShortName">[5]</obj_property>
+         <obj_property name="ObjectShortName">[5]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/tb_SKELETON/skl/task_table[4]" type="array">
+         <obj_property name="ElementShortName">[4]</obj_property>
+         <obj_property name="ObjectShortName">[4]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/tb_SKELETON/skl/task_table[3]" type="array">
+         <obj_property name="ElementShortName">[3]</obj_property>
+         <obj_property name="ObjectShortName">[3]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/tb_SKELETON/skl/task_table[2]" type="array">
+         <obj_property name="ElementShortName">[2]</obj_property>
+         <obj_property name="ObjectShortName">[2]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/tb_SKELETON/skl/task_table[1]" type="array">
+         <obj_property name="ElementShortName">[1]</obj_property>
+         <obj_property name="ObjectShortName">[1]</obj_property>
+         <obj_property name="isExpanded"></obj_property>
+      </wvobject>
+      <wvobject fp_name="/tb_SKELETON/skl/task_table[0]" type="array">
+         <obj_property name="ElementShortName">[0]</obj_property>
+         <obj_property name="ObjectShortName">[0]</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="/tb_SKELETON/skl/running_valid" type="logic">
+      <obj_property name="ElementShortName">running_valid</obj_property>
+      <obj_property name="ObjectShortName">running_valid</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_SKELETON/skl/running_task" type="array">
+      <obj_property name="ElementShortName">running_task[2:0]</obj_property>
+      <obj_property name="ObjectShortName">running_task[2:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_SKELETON/skl/rst" type="logic">
+      <obj_property name="ElementShortName">rst</obj_property>
+      <obj_property name="ObjectShortName">rst</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_SKELETON/skl/ready_queue" type="array">
+      <obj_property name="ElementShortName">ready_queue[7:0][2:0]</obj_property>
+      <obj_property name="ObjectShortName">ready_queue[7:0][2:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_SKELETON/skl/pop_valid" type="logic">
+      <obj_property name="ElementShortName">pop_valid</obj_property>
+      <obj_property name="ObjectShortName">pop_valid</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_SKELETON/skl/next_valid" type="logic">
+      <obj_property name="ElementShortName">next_valid</obj_property>
+      <obj_property name="ObjectShortName">next_valid</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_SKELETON/skl/next_task" type="array">
+      <obj_property name="ElementShortName">next_task[2:0]</obj_property>
+      <obj_property name="ObjectShortName">next_task[2:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_SKELETON/skl/n_task_table" type="array">
+      <obj_property name="ElementShortName">n_task_table[7:0]</obj_property>
+      <obj_property name="ObjectShortName">n_task_table[7:0]</obj_property>
+      <wvobject fp_name="/tb_SKELETON/skl/n_task_table[7]" type="array">
+         <obj_property name="ElementShortName">[7]</obj_property>
+         <obj_property name="ObjectShortName">[7]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/tb_SKELETON/skl/n_task_table[6]" type="array">
+         <obj_property name="ElementShortName">[6]</obj_property>
+         <obj_property name="ObjectShortName">[6]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/tb_SKELETON/skl/n_task_table[5]" type="array">
+         <obj_property name="ElementShortName">[5]</obj_property>
+         <obj_property name="ObjectShortName">[5]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/tb_SKELETON/skl/n_task_table[4]" type="array">
+         <obj_property name="ElementShortName">[4]</obj_property>
+         <obj_property name="ObjectShortName">[4]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/tb_SKELETON/skl/n_task_table[3]" type="array">
+         <obj_property name="ElementShortName">[3]</obj_property>
+         <obj_property name="ObjectShortName">[3]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/tb_SKELETON/skl/n_task_table[2]" type="array">
+         <obj_property name="ElementShortName">[2]</obj_property>
+         <obj_property name="ObjectShortName">[2]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/tb_SKELETON/skl/n_task_table[1]" type="array">
+         <obj_property name="ElementShortName">[1]</obj_property>
+         <obj_property name="ObjectShortName">[1]</obj_property>
+         <obj_property name="isExpanded"></obj_property>
+      </wvobject>
+      <wvobject fp_name="/tb_SKELETON/skl/n_task_table[0]" type="array">
+         <obj_property name="ElementShortName">[0]</obj_property>
+         <obj_property name="ObjectShortName">[0]</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="/tb_SKELETON/skl/n_ready_queue" type="array">
+      <obj_property name="ElementShortName">n_ready_queue[7:0][2:0]</obj_property>
+      <obj_property name="ObjectShortName">n_ready_queue[7:0][2:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_SKELETON/skl/insert_valid" type="logic">
+      <obj_property name="ElementShortName">insert_valid</obj_property>
+      <obj_property name="ObjectShortName">insert_valid</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_SKELETON/skl/insert_index" type="array">
+      <obj_property name="ElementShortName">insert_index[2:0]</obj_property>
+      <obj_property name="ObjectShortName">insert_index[2:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_SKELETON/skl/insert_id" type="array">
+      <obj_property name="ElementShortName">insert_id[2:0]</obj_property>
+      <obj_property name="ObjectShortName">insert_id[2:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_SKELETON/skl/input_task" type="array">
+      <obj_property name="ElementShortName">input_task</obj_property>
+      <obj_property name="ObjectShortName">input_task</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_SKELETON/skl/ex_limit" type="array">
+      <obj_property name="ElementShortName">ex_limit[7:0]</obj_property>
+      <obj_property name="ObjectShortName">ex_limit[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_SKELETON/skl/en" type="logic">
+      <obj_property name="ElementShortName">en</obj_property>
+      <obj_property name="ObjectShortName">en</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_SKELETON/skl/current_time" type="array">
+      <obj_property name="ElementShortName">current_time[7:0]</obj_property>
+      <obj_property name="ObjectShortName">current_time[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_SKELETON/skl/current_criticality" type="array">
+      <obj_property name="ElementShortName">current_criticality[2:0]</obj_property>
+      <obj_property name="ObjectShortName">current_criticality[2:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_SKELETON/skl/criticality_transition" type="logic">
+      <obj_property name="ElementShortName">criticality_transition</obj_property>
+      <obj_property name="ObjectShortName">criticality_transition</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_SKELETON/skl/cpu_interrupt" type="logic">
+      <obj_property name="ElementShortName">cpu_interrupt</obj_property>
+      <obj_property name="ObjectShortName">cpu_interrupt</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_SKELETON/skl/completion_valid" type="logic">
+      <obj_property name="ElementShortName">completion_valid</obj_property>
+      <obj_property name="ObjectShortName">completion_valid</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_SKELETON/skl/completion_succesful" type="logic">
+      <obj_property name="ElementShortName">completion_succesful</obj_property>
+      <obj_property name="ObjectShortName">completion_succesful</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_SKELETON/skl/clk" type="logic">
+      <obj_property name="ElementShortName">clk</obj_property>
+      <obj_property name="ObjectShortName">clk</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_SKELETON/skl/queue_size" type="array">
+      <obj_property name="ElementShortName">queue_size[2:0]</obj_property>
+      <obj_property name="ObjectShortName">queue_size[2:0]</obj_property>
+   </wvobject>
+</wave_config>

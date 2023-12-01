@@ -1,4 +1,4 @@
 INFO: [VRFC 10-2263] Analyzing SystemVerilog file "C:/Users/brend/Documents/school/eecs571/project/eecs571/scheduler/verilog/SKELETON.sv" into library xil_defaultlib
 INFO: [VRFC 10-311] analyzing module SKELETON
 INFO: [VRFC 10-2263] Analyzing SystemVerilog file "C:/Users/brend/Documents/school/eecs571/project/eecs571/scheduler/verilog/tb_SKELETON.sv" into library xil_defaultlib
-INFO: [VRFC 10-311] analyzing module tb_SKELETONS
+INFO: [VRFC 10-311] analyzing module tb_SKELETON

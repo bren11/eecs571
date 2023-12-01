@@ -1,5 +1,4 @@
 `timescale 1ns / 1ps
-`include "SKELETON.sv"
 
 module tb_SKELETON;
 
@@ -61,6 +60,7 @@ module tb_SKELETON;
         input_task.period = 20;
         input_task.ex_low = 5;
         @(negedge clk);
+        input_task.id = 1;
         input_task.period = 40;
         input_task.virtual_deadline = 30;
         input_task.criticality = HIGH_CRIT;
