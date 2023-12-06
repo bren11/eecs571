@@ -1,8 +1,11 @@
 //Verilog HDL for "DIGITAL", "SKELETON", "functional"
-`define MAX_TASKS 8
+`define MAX_TASKS 32
 `define MAX_TASK_BITS $clog2(`MAX_TASKS)
 
-`define TIME_BITS 8
+`define MAX_UTIL_PRECISION 1024
+`define MAX_UTIL_BITS $clog2(`MAX_UTIL_PRECISION)
+
+`define TIME_BITS 25
 
 `define FALSE  1'h0
 `define TRUE  1'h1
@@ -25,8 +28,9 @@ typedef enum logic {
 
 typedef enum logic [1:0] {
 	IDLE = 2'h0,
-	BLOCKED = 2'h1,
-    READY = 2'h2
+    DROPPED = 2'h1,
+	BLOCKED = 2'h2,
+    READY = 2'h3
 } TASK_STATE;
 
 typedef struct packed {
@@ -38,6 +42,7 @@ typedef struct packed {
     logic [`TIME_BITS-1:0] virtual_deadline;
     logic [`TIME_BITS-1:0] ex_high;
     logic [`TIME_BITS-1:0] ex_low;
+    logic [`MAX_UTIL_BITS-1:0] utilization;
 
     logic [`TIME_BITS-1:0] wakeup;
     logic [`TIME_BITS-1:0] absolute_deadline;
@@ -52,6 +57,7 @@ typedef struct packed {
     TASK_CRIT_IN criticality;
     logic [`TIME_BITS-1:0] period;
     logic [`TIME_BITS-1:0] virtual_deadline;
+    logic [`MAX_UTIL_BITS-1:0] utilization;
     logic [`TIME_BITS-1:0] ex_high;
     logic [`TIME_BITS-1:0] ex_low;
 } TASK_TABLE_INPUT;
@@ -69,8 +75,6 @@ module SKELETON (
     input completion_valid,
     input completion_succesful,
 
-    input [3:0][`MAX_TASK_BITS-1:0] transition_nums,
-
     output [`MAX_TASK_BITS-1:0] running_task,
     output [`MAX_TASK_BITS-1:0] next_task,
 
@@ -81,6 +85,7 @@ module SKELETON (
 );
 
 logic [`TIME_BITS-1:0] current_time;
+logic [`TIME_BITS-1:0] current_time;
 
 always_ff @(posedge clk) begin
     if (rst || current_time[`TIME_BITS-1]) begin
@@ -89,6 +94,12 @@ always_ff @(posedge clk) begin
         current_time <= current_time + 1;
     end
 end
+
+logic [`MAX_UTIL_BITS-1:0] max_utilization;
+logic [`MAX_UTIL_BITS-1:0] cur_utilization;
+logic [`MAX_UTIL_BITS-1:0] n_cur_utilization;
+logic [`MAX_UTIL_BITS-1:0] target_utilization;
+logic [`MAX_UTIL_BITS-1:0] n_target_utilization;
 
 TASK_TABLE_ENTRY [`MAX_TASKS-1:0] task_table;
 TASK_TABLE_ENTRY [`MAX_TASKS-1:0] n_task_table;
@@ -99,10 +110,10 @@ logic [`MAX_TASK_BITS-1:0] queue_size;
 
 logic insert_valid;
 logic pop_valid;
+logic drop_valid;
 logic [`MAX_TASK_BITS-1:0] insert_id;
-logic [`MAX_TASK_BITS-1:0] insert_index;
+logic [`MAX_TASK_BITS-1:0] drop_index;
 
-logic [`TIME_BITS-1:0] ex_limit;
 logic [`MAX_TASK_BITS-1:0] current_criticality;
 logic criticality_transition;
 
@@ -115,9 +126,13 @@ assign cpu_interrupt = ready_queue[0] != n_ready_queue[0];
 always_comb begin
     n_task_table = task_table;
     n_ready_queue = ready_queue;
-    insert_valid = 0;
+    n_target_utilization = target_utilization;
+    n_cur_utilization = cur_utilization;
+    insert_valid = `FALSE;
     insert_id = 0;
     insert_index = 0;
+    drop_valid = `FALSE;
+    drop_index = 0;
     criticality_transition = `FALSE;
     pop_valid = completion_valid;
 
@@ -131,6 +146,7 @@ always_comb begin
         n_task_table[input_task.id].virtual_deadline = input_task.virtual_deadline;
         n_task_table[input_task.id].ex_high = input_task.ex_high;
         n_task_table[input_task.id].ex_low = input_task.ex_low;
+        n_task_table[input_task.id].utilization = input_task.utilization;
         n_task_table[input_task.id].wakeup = 0;
         n_task_table[input_task.id].absolute_deadline = 0;
         n_task_table[input_task.id].scheduling_deadline = 0;
@@ -140,7 +156,7 @@ always_comb begin
     // Wakeup periodic tasks
     for (int unsigned i = 0; i < `MAX_TASKS; ++i) begin
         if (task_table[i].valid && task_table[i].task_type == PERIODIC && task_table[i].state == IDLE && task_table[i].wakeup <= current_time) begin
-            if (current_criticality >= transition_nums[3] && task_table[i].criticality == LOW) begin
+            if (task_table[wakeup_id].state == DROPPED && task_table[i].criticality == LOW) begin
                 n_task_table[i].wakeup = n_task_table[i].wakeup + task_table[i].period;
             end else begin
                 insert_valid = `TRUE;
@@ -152,7 +168,7 @@ always_comb begin
     
     // wakeup blocked tasks or interrupts
     if (wakeup_valid) begin
-        if (current_criticality >= transition_nums[3] && task_table[wakeup_id].criticality == LOW) begin
+        if (task_table[wakeup_id].state == DROPPED) begin
             n_task_table[wakeup_id].state = IDLE;
             n_task_table[wakeup_id].ex_time = 0;
             if (task_table[wakeup_id].task_type == PERIODIC) begin
@@ -167,50 +183,25 @@ always_comb begin
         end
     end
 
-    // Determing execution limit based on criticality
-    if (task_table[running_task].criticality == LOW) begin
-        if (current_criticality >= transition_nums[2]) begin
-            ex_limit = task_table[running_task].ex_low >> 2;
-        end else if (current_criticality >= transition_nums[1]) begin
-            ex_limit = task_table[running_task].ex_low >> 1;
-        end else if (current_criticality >= transition_nums[0]) begin
-            ex_limit = (task_table[running_task].ex_low >> 1) + (task_table[running_task].ex_low >> 2);
-        end else begin
-            ex_limit = task_table[running_task].ex_low;
-        end
-    end else if (task_table[running_task].criticality == HIGH_LOW_MODE) begin
-        ex_limit = task_table[running_task].ex_low;
-    end else if (task_table[running_task].criticality == HIGH_HIGH_MODE) begin
-        ex_limit = task_table[running_task].ex_high;
-    end else begin
-        ex_limit = task_table[running_task].ex_low;
-    end
-
     // Handle removal of tasks from queue
-    if (completion_valid || (running_valid && current_time >= task_table[running_task].absolute_deadline)) begin
-        if (completion_succesful || (running_valid && current_time >= task_table[running_task].absolute_deadline)) begin
-            n_task_table[running_task].state = IDLE;
-            n_task_table[running_task].ex_time = 0;
-            if (task_table[running_task].task_type == PERIODIC) begin
-                n_task_table[running_task].wakeup = task_table[running_task].wakeup + task_table[running_task].period;
-            end
-        end else begin
-            n_task_table[running_task].state = BLOCKED;
+    if ((completion_valid && completion_succesful) || 
+        (running_valid && current_time >= task_table[running_task].absolute_deadline) ||
+        (running_valid && task_table[running_task].ex_time >= task_table[running_task].ex_low && task_table[running_task].criticality != HIGH_LOW_MODE) ||
+        (running_valid && task_table[running_task].state == DROPPED)) begin
+        pop_valid = `TRUE;
+        n_task_table[running_task].state = IDLE;
+        n_task_table[running_task].ex_time = 0;
+        if (task_table[running_task].task_type == PERIODIC) begin
+            n_task_table[running_task].wakeup = task_table[running_task].wakeup + task_table[running_task].period;
         end
-    end else if (running_valid && task_table[running_task].ex_time >= ex_limit) begin
-        if (task_table[running_task].criticality == HIGH_LOW_MODE) begin
-            n_task_table[running_task].criticality = HIGH_HIGH_MODE;
-            n_task_table[running_task].scheduling_deadline = task_table[running_task].absolute_deadline;
-            n_task_table[running_task].ex_time = task_table[running_task].ex_time + 1;
-            criticality_transition = `TRUE;
-        end else begin
-            pop_valid = `TRUE;
-            n_task_table[running_task].state = IDLE;
-            n_task_table[running_task].ex_time = 0;
-            if (task_table[running_task].task_type == PERIODIC) begin
-                n_task_table[running_task].wakeup = task_table[running_task].wakeup + task_table[running_task].period;
-            end
-        end
+    end else if (running_valid && task_table[running_task].ex_time >= task_table[running_task].ex_low && task_table[running_task].criticality == HIGH_LOW_MODE) begin
+        n_task_table[running_task].criticality = HIGH_HIGH_MODE;
+        n_task_table[running_task].scheduling_deadline = task_table[running_task].absolute_deadline;
+        n_task_table[running_task].ex_time = task_table[running_task].ex_time + 1;
+        criticality_transition = `TRUE;
+        n_target_utilization = target_utilization - task_table[running_task].utilization;
+    end else if (completion_valid && ~completion_succesful) begin 
+        n_task_table[running_task].state = BLOCKED;
     end else if (running_valid) begin 
         n_task_table[running_task].ex_time = task_table[running_task].ex_time + 1;
     end
@@ -262,11 +253,26 @@ always_comb begin
             n_ready_queue[i - 1] = ready_queue[i];
         end
     end
+
+    if (target_utilization > cur_utilization) begin
+        for (int i = 0; i < `MAX_TASKS; i++) begin
+            if (task_table[i].valid && task_table[i].criticality == LOW && task_table[i].status != DROPPED && 
+                (~drop_valid || task_table[i].utilization > task_table[drop_index].utilization) begin
+                drop_valid = `TRUE;
+                drop_index = i;
+            end
+        end
+        if (drop_valid) begin
+            n_task_table[drop_index].state = DROPPED;
+        end
+    end
     
     if (~running_valid && current_criticality > 0) begin
         for (int i = 0; i < `MAX_TASKS - 1; ++i) begin
             if (task_table[i].valid && task_table[i].criticality == HIGH_HIGH_MODE) begin
                 n_task_table[i].criticality = HIGH_LOW_MODE;
+            end else if (task_table[i].valid && task_table[i].criticality == LOW && task_table[i].state == DROPPED) begin
+                n_task_table[i].state = IDLE;
             end
         end
     end
@@ -286,7 +292,18 @@ always_ff @(posedge clk) begin
         ready_queue <= 0;
         current_criticality <= 0;
         queue_size <= 0;
+        max_utilization <= 0;
+        target_utilization <= 0;
+        cur_utilization <= 0;
     end else if (en) begin 
+        if (input_task.valid && input_task.criticality = LOW_CRIT) begin
+            target_utilization <= n_target_utilization + input_task.utilization;
+            cur_utilization <= n_cur_utilization + input_task.utilization;
+            max_utilization <= max_utilization + input_task.utilization;
+        end else begin
+            target_utilization <= n_target_utilization;
+            cur_utilization <= n_cur_utilization;
+        end
         task_table <= n_task_table;
         ready_queue <= n_ready_queue;
         if (insert_valid & ~pop_valid) begin
@@ -298,6 +315,8 @@ always_ff @(posedge clk) begin
             current_criticality <= current_criticality + 1;
         end else if (~running_valid) begin 
             current_criticality <= 0;
+            cur_utilization <= max_utilization;
+            target_utilization <= max_utilization;
         end
     end
 end
