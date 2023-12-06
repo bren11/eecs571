@@ -16,8 +16,6 @@ module tb_SKELETON;
     logic completion_valid;
     logic completion_succesful;
 
-    logic [3:0][`MAX_TASK_BITS-1:0] transition_nums;
-
     logic [`MAX_TASK_BITS-1:0] running_task;
     logic [`MAX_TASK_BITS-1:0] next_task;
 
@@ -27,7 +25,7 @@ module tb_SKELETON;
     logic cpu_interrupt;
 
     SKELETON skl(.clk, .rst, .en, .input_task, .wakeup_valid, .wakeup_id, .completion_valid,
-    .completion_succesful, .transition_nums, .running_task, .next_task, .running_valid, .next_valid, .cpu_interrupt);
+    .completion_succesful, .running_task, .next_task, .running_valid, .next_valid, .cpu_interrupt);
 
     always begin
 		#1;
@@ -44,10 +42,6 @@ module tb_SKELETON;
         wakeup_id = 0;
         completion_succesful = 0;
         completion_valid = 0;
-        transition_nums[0] = 1;
-        transition_nums[1] = 2;
-        transition_nums[2] = 3;
-        transition_nums[3] = 4;
 
         @(negedge clk);
         @(negedge clk);

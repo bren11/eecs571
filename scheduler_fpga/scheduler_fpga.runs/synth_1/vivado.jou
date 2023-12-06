@@ -1,0 +1,14 @@
+#-----------------------------------------------------------
+# Vivado v2023.2 (64-bit)
+# SW Build 4029153 on Fri Oct 13 20:14:34 MDT 2023
+# IP Build 4028589 on Sat Oct 14 00:45:43 MDT 2023
+# SharedData Build 4025554 on Tue Oct 10 17:18:54 MDT 2023
+# Start of session at: Fri Dec  1 00:01:28 2023
+# Process ID: 21388
+# Current directory: C:/Users/brend/Documents/school/eecs571/project/eecs571/scheduler_fpga/scheduler_fpga.runs/synth_1
+# Command line: vivado.exe -log SKELETON.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source SKELETON.tcl
+# Log file: C:/Users/brend/Documents/school/eecs571/project/eecs571/scheduler_fpga/scheduler_fpga.runs/synth_1/SKELETON.vds
+# Journal file: C:/Users/brend/Documents/school/eecs571/project/eecs571/scheduler_fpga/scheduler_fpga.runs/synth_1\vivado.jou
+# Running On: MSI, OS: Windows, CPU Frequency: 3302 MHz, CPU Physical cores: 4, Host memory: 16867 MB
+#-----------------------------------------------------------
+source SKELETON.tcl -notrace

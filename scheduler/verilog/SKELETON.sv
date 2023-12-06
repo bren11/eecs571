@@ -5,7 +5,7 @@
 `define MAX_UTIL_PRECISION 1024
 `define MAX_UTIL_BITS $clog2(`MAX_UTIL_PRECISION)
 
-`define TIME_BITS 25
+`define TIME_BITS 32
 
 `define FALSE  1'h0
 `define TRUE  1'h1
@@ -85,7 +85,6 @@ module SKELETON (
 );
 
 logic [`TIME_BITS-1:0] current_time;
-logic [`TIME_BITS-1:0] current_time;
 
 always_ff @(posedge clk) begin
     if (rst || current_time[`TIME_BITS-1]) begin
@@ -130,7 +129,6 @@ always_comb begin
     n_cur_utilization = cur_utilization;
     insert_valid = `FALSE;
     insert_id = 0;
-    insert_index = 0;
     drop_valid = `FALSE;
     drop_index = 0;
     criticality_transition = `FALSE;
@@ -256,8 +254,8 @@ always_comb begin
 
     if (target_utilization > cur_utilization) begin
         for (int i = 0; i < `MAX_TASKS; i++) begin
-            if (task_table[i].valid && task_table[i].criticality == LOW && task_table[i].status != DROPPED && 
-                (~drop_valid || task_table[i].utilization > task_table[drop_index].utilization) begin
+            if (task_table[i].valid && task_table[i].criticality == LOW && task_table[i].state != DROPPED && 
+                (~drop_valid || task_table[i].utilization > task_table[drop_index].utilization)) begin
                 drop_valid = `TRUE;
                 drop_index = i;
             end
@@ -296,7 +294,7 @@ always_ff @(posedge clk) begin
         target_utilization <= 0;
         cur_utilization <= 0;
     end else if (en) begin 
-        if (input_task.valid && input_task.criticality = LOW_CRIT) begin
+        if (input_task.valid && input_task.criticality == LOW_CRIT) begin
             target_utilization <= n_target_utilization + input_task.utilization;
             cur_utilization <= n_cur_utilization + input_task.utilization;
             max_utilization <= max_utilization + input_task.utilization;
