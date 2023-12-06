@@ -20,7 +20,7 @@ float randomInt(int min, int max) {
     return rand() % (max - min) + min;
 }
 
-enum Criticality { Low, High, Interrupt};
+enum Criticality { Low, High };
 
 struct Task {
     int period;
@@ -34,14 +34,13 @@ int main() {
     srand(time(0));
 
     float bound = 0.9f;
-    float overrunP = .7f;
+    float overrunP = .5;
     float slackRatio = 1;
 
-    float interruptP = .3;
-    float highP = .4;
+    float highP = .5;
 
-    int clockPeriods = 1000000;
-    int taskSetNum = 10;
+    int clockPeriods = 10000000;
+    int taskSetNum = 100;
 
     for (int i = 0; i < taskSetNum; i++) {
 
@@ -53,7 +52,7 @@ int main() {
             Task t{};
 
             float type = randomFloat(0, 1);
-            t.crit = type < interruptP ? Interrupt : type < interruptP + highP ? High : Low;
+            t.crit = type < highP ? High : Low;
 
             type = randomFloat(0, 1);
             float uLow;
@@ -75,9 +74,6 @@ int main() {
 
             if (t.crit == High) {
                 t.highC = (int) roundf((float) t.lowC * randomFloat(1, 4));
-            } else if (t.crit == Interrupt) {
-                t.lowC = randomInt(2, 20);
-                t.highC = t.lowC;
             } else {
                 t.highC = 0;
             }
@@ -102,7 +98,7 @@ int main() {
         myfile << bound << " " << overrunP << " " << slackRatio << " " << clockPeriods << " " << taskSetNum << " " << tasks.size() << '\n';
 
         for (Task& t : tasks) {
-            myfile << t.period << (t.crit == Low ? " L " : t.crit == High ? " H " : " I ") << t.lowC << " " << t.highC;
+            myfile << t.period << (t.crit == Low ? " L " : " H ") << t.lowC << " " << t.highC;
             for (int j = 0; j <= clockPeriods / t.period; j++) {
                 int exTime = randomInt(slackRatio * t.lowC, t.lowC);
                 if (t.crit == High && randomFloat(0, 1) < overrunP) {

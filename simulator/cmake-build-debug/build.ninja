@@ -85,6 +85,24 @@ build CMakeFiles/simulator.dir/Scheduler_FMC.cpp.obj: CXX_COMPILER__simulator_De
   OBJECT_DIR = CMakeFiles\simulator.dir
   OBJECT_FILE_DIR = CMakeFiles\simulator.dir
 
+build CMakeFiles/simulator.dir/Scheduler_FMC_Drop.cpp.obj: CXX_COMPILER__simulator_Debug C$:/Users/brend/Documents/school/eecs571/project/eecs571/simulator/Scheduler_FMC_Drop.cpp || cmake_object_order_depends_target_simulator
+  DEP_FILE = CMakeFiles\simulator.dir\Scheduler_FMC_Drop.cpp.obj.d
+  FLAGS = -g -std=gnu++14
+  OBJECT_DIR = CMakeFiles\simulator.dir
+  OBJECT_FILE_DIR = CMakeFiles\simulator.dir
+
+build CMakeFiles/simulator.dir/Scheduler_H_FMC.cpp.obj: CXX_COMPILER__simulator_Debug C$:/Users/brend/Documents/school/eecs571/project/eecs571/simulator/Scheduler_H_FMC.cpp || cmake_object_order_depends_target_simulator
+  DEP_FILE = CMakeFiles\simulator.dir\Scheduler_H_FMC.cpp.obj.d
+  FLAGS = -g -std=gnu++14
+  OBJECT_DIR = CMakeFiles\simulator.dir
+  OBJECT_FILE_DIR = CMakeFiles\simulator.dir
+
+build CMakeFiles/simulator.dir/Scheduler_RED.cpp.obj: CXX_COMPILER__simulator_Debug C$:/Users/brend/Documents/school/eecs571/project/eecs571/simulator/Scheduler_RED.cpp || cmake_object_order_depends_target_simulator
+  DEP_FILE = CMakeFiles\simulator.dir\Scheduler_RED.cpp.obj.d
+  FLAGS = -g -std=gnu++14
+  OBJECT_DIR = CMakeFiles\simulator.dir
+  OBJECT_FILE_DIR = CMakeFiles\simulator.dir
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target simulator
@@ -93,7 +111,7 @@ build CMakeFiles/simulator.dir/Scheduler_FMC.cpp.obj: CXX_COMPILER__simulator_De
 #############################################
 # Link the executable simulator.exe
 
-build simulator.exe: CXX_EXECUTABLE_LINKER__simulator_Debug CMakeFiles/simulator.dir/main.cpp.obj CMakeFiles/simulator.dir/Scheduler.cpp.obj CMakeFiles/simulator.dir/Scheduler_EDF_VD.cpp.obj CMakeFiles/simulator.dir/Scheduler_FMC.cpp.obj
+build simulator.exe: CXX_EXECUTABLE_LINKER__simulator_Debug CMakeFiles/simulator.dir/main.cpp.obj CMakeFiles/simulator.dir/Scheduler.cpp.obj CMakeFiles/simulator.dir/Scheduler_EDF_VD.cpp.obj CMakeFiles/simulator.dir/Scheduler_FMC.cpp.obj CMakeFiles/simulator.dir/Scheduler_FMC_Drop.cpp.obj CMakeFiles/simulator.dir/Scheduler_H_FMC.cpp.obj CMakeFiles/simulator.dir/Scheduler_RED.cpp.obj
   FLAGS = -g
   LINK_LIBRARIES = -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   OBJECT_DIR = CMakeFiles\simulator.dir

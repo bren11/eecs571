@@ -1,8 +1,8 @@
 //Verilog HDL for "DIGITAL", "SKELETON", "functional"
-`define MAX_TASKS 8
+`define MAX_TASKS 32
 `define MAX_TASK_BITS $clog2(`MAX_TASKS)
 
-`define TIME_BITS 8
+`define TIME_BITS 32
 
 `define FALSE  1'h0
 `define TRUE  1'h1

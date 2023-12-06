@@ -24,44 +24,46 @@ float Scheduler::getHighPFJ() const {
     return (float) succeedHigh / (float) (succeedHigh + failedHigh);
 }
 
-float Scheduler::getIntPFJ() const {
-    if (succeedInt + failedInt == 0) {
-        return 1;
-    }
-    return (float) succeedInt / (float) (succeedInt + failedInt);
+std::string Scheduler::getName() const {
+    return name;
 }
 
-EDF::EDF(const std::vector<Task> &tasksIn) : Scheduler(tasksIn) {}
+void Scheduler::reset() {
+    switches = failedHigh = failedLow = succeedHigh = succeedLow = 0;
+}
+
+void Scheduler::reset(const vector<Task> &tasksIn) {
+    tasks = tasksIn;
+    reset();
+}
+
+EDF::EDF() {
+    name = "EDF";
+}
+
+EDF::EDF(const std::vector<Task> &tasksIn) : Scheduler(tasksIn) {
+    name = "EDF";
+}
 
 void EDF::schedule(int quantum, int maxTime) {
     int runningId = -1;
 
     std::vector<TaskState> taskStates;
 
+    reset();
+
     for (const Task &t: tasks) {
         taskStates.emplace_back(TaskState{Ready, 0, t.period, 0, 0});
     }
 
-    switches = failedHigh = failedLow = succeedHigh = succeedLow = succeedInt = failedInt = 0;
-
     for (int time = 0; time <= maxTime; time++) {
 
-        bool interrupt = false;
-        if (runningId < 0 || tasks[runningId].crit != Interrupt) {
-            for (int i = 0; i < tasks.size(); i++) {
-                if (tasks[i].crit == Interrupt && taskStates[i].state == Idle && time >= taskStates[i].wakeupTime) {
-                    interrupt = true;
-                    break;
-                }
-            }
-        }
-
-        if (time % quantum == 0 || interrupt ||
+        if (time % quantum == 0 ||
             runningId >= 0 &&
             (taskStates[runningId].exeTime >= tasks[runningId].exeTimes[taskStates[runningId].exeNum] ||
-             time >= taskStates[runningId].absoluteDeadline)) {
+             time > taskStates[runningId].absoluteDeadline)) {
 
-            switches++;
+            switches += 2;
 
             if (runningId >= 0 &&
                 taskStates[runningId].exeTime >= tasks[runningId].exeTimes[taskStates[runningId].exeNum]) {
@@ -69,8 +71,6 @@ void EDF::schedule(int quantum, int maxTime) {
                     succeedLow++;
                 } else if (tasks[runningId].crit == High) {
                     succeedHigh++;
-                } else {
-                    succeedInt++;
                 }
                 taskStates[runningId].exeNum++;
                 taskStates[runningId].state = Idle;
@@ -81,17 +81,15 @@ void EDF::schedule(int quantum, int maxTime) {
 
             for (int i = 0; i < tasks.size(); i++) {
                 if ((taskStates[i].state == Ready || taskStates[i].state == Running) &&
-                    time >= taskStates[i].absoluteDeadline) {
+                    time > taskStates[i].absoluteDeadline) {
                     taskStates[i].exeNum++;
                     taskStates[i].state = Idle;
                     taskStates[i].wakeupTime += tasks[i].period;
                     taskStates[i].exeTime = 0;
                     if (tasks[i].crit == Low) {
                         failedLow++;
-                    } else if (tasks[i].crit == High) {
-                        failedHigh++;
                     } else {
-                        failedInt++;
+                        failedHigh++;
                     }
                     if (i == runningId) {
                         runningId = -1;
@@ -107,24 +105,18 @@ void EDF::schedule(int quantum, int maxTime) {
             }
 
             int minId = runningId;
-            if (runningId < 0 || tasks[runningId].crit != Interrupt) {
-                for (int i = 0; i < tasks.size(); i++) {
-                    if (taskStates[i].state == Ready &&
-                        (minId < 0 || taskStates[i].absoluteDeadline < taskStates[minId].absoluteDeadline)) {
-                        minId = i;
-                    }
-                    if (taskStates[i].state == Ready && tasks[i].crit == Interrupt) {
-                        minId = i;
-                        break;
-                    }
+            for (int i = 0; i < tasks.size(); i++) {
+                if (taskStates[i].state == Ready &&
+                    (minId < 0 || taskStates[i].absoluteDeadline < taskStates[minId].absoluteDeadline)) {
+                    minId = i;
                 }
-                if (minId != runningId) {
-                    if (runningId >= 0) {
-                        taskStates[runningId].state = Ready;
-                    }
-                    taskStates[minId].state = Running;
-                    runningId = minId;
+            }
+            if (minId != runningId) {
+                if (runningId >= 0) {
+                    taskStates[runningId].state = Ready;
                 }
+                taskStates[minId].state = Running;
+                runningId = minId;
             }
         }
         if (runningId >= 0) {
